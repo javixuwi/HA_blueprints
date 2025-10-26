@@ -1,5 +1,5 @@
 # HA_blueprints
-Somewhere to store and discuss automation blueprints
+Based on https://github.com/SgtBatten/HA_blueprints/
 
 ## [Frigate Camera Notificatons](https://github.com/SgtBatten/HA_blueprints/tree/main/Frigate_Camera_Notifications)
 
