@@ -1,12 +1,12 @@
 ﻿blueprint:
-  name: Frigate Notifications (0.14.0.2w) + Ollama Vision
-  author: SgtBatten (Modificado por Gemini)
+  name: Frigate Notifications (0.14.0.2w)
+  author: SgtBatten
   homeassistant:
     min_version: 2024.11.0
   description: |
-    ## Frigate Notifications + Ollama Vision AI
+    ## Frigate Notifications
 
-    Una versión modificada del blueprint de SgtBatten que añade la capacidad de analizar la imagen del evento con Ollama Vision y añadir la respuesta de la IA a la notificación.
+    A highly customisable Notification template for Frigate Camera Notifications.
 
     ### Software Version Requirements
       - Minimum Home Assistant Version: 2024.10
@@ -14,7 +14,6 @@
       - Minimum Frigate Integration Version: 5.7.0
         - **Note:** "Enable the unauthenticated notification event proxy" must be ticked during setup
       - An MQTT broker connected to Home Assistant and Frigate.
-      - **Integración 'ollama_vision' (de remimikalsen) instalada y funcionando.**
       - Minimum iOS Version: 15.0
 
     ### Required Configuration Options:
@@ -22,16 +21,15 @@
       - Mobile Device (Running HA Companion App)
 
     ### Features:
-      - Incluye todas las características del blueprint original de SgtBatten.
-      - **Nueva Función:** Sección opcional para habilitar el análisis de IA con Ollama Vision.
-      - La respuesta de la IA se añade automáticamente al mensaje de notificación.
+      - Easily select the camera entities or mobile device using a drop-down menu.
+      - Configure multiple cameras in one automation. 
+
+      For the full features list visit the [GitHub Repository][1]
 
     [1]: https://github.com/SgtBatten/HA_blueprints/blob/main/Frigate_Camera_Notifications
-    [2]: https://github.com/remimikalsen/ollama_vision
 
     ## Support
-    Para problemas con el blueprint original: https://github.com/SgtBatten/HA_blueprints
-    Para problemas con la integración de Ollama: https://github.com/remimikalsen/ollama_vision
+    Go to https://github.com/SgtBatten/HA_blueprints to report bugs, request new features, or get support with your configuration.
 
   domain: automation
   source_url: https://github.com/SgtBatten/HA_blueprints/blob/main/Frigate_Camera_Notifications/Beta.yaml
@@ -407,6 +405,52 @@
           name: Notification Channel - Android only (Optional)
           description: Create a new channel for notifications to allow custom notification sounds, vibration patterns, and override of Do Not Disturb mode. Configured directly on the device.
           default: ""
+    
+    llm_vision:
+      name: |
+        # LLM Vision Analysis
+      description: (Opcional) Analiza el snapshot del evento con un LLM local (Ollama o LLMVision).
+      icon: mdi:robot-love
+      collapsed: true
+      input:
+        llm_vision_enable:
+          name: Habilitar Análisis LLM Vision
+          description: Si se activa, el snapshot del evento se enviará a un LLM para su análisis.
+          default: false
+          selector:
+            boolean:
+        llm_vision_service:
+          name: Integración LLM Vision
+          description: Selecciona qué integración utilizar para el análisis.
+          default: "ollama_vision"
+          selector:
+            select:
+              options:
+                - label: "Ollama Vision (by remimikalsen)"
+                  value: "ollama_vision"
+                - label: "LLMVision (by valentinfrlch)"
+                  value: "ha-llmvision"
+        llm_vision_entity:
+          name: Entidad LLM Vision
+          description: El entity_id de tu integración ollama_vision o llmvision que se usará para el análisis.
+          default: ""
+          selector:
+            entity:
+        llm_vision_prompt:
+          name: Prompt para el Análisis LLM
+          description: El prompt que se enviará al LLM. Puedes usar variables como {{camera_name}} y {{label}}.
+          default: "Esto es un snapshot de la cámara {{camera_name}}. Se ha detectado un {{label}}. Describe la escena brevemente. Sé conciso."
+          selector:
+            text:
+              multiline: true
+        llm_message_template:
+          name: Plantilla del Mensaje Final
+          description: Cómo se añade el análisis de IA a la notificación. Usa {{message}} para el mensaje original y {{llm_description}} para la respuesta de la IA.
+          default: "{{ message }}\n\n🤖: {{ llm_description }}"
+          selector:
+            text:
+              multiline: true
+
     filters:
       name: |
         # Filters
@@ -826,52 +870,6 @@
           selector:
             action: {}
           default: []
-
-    # =================================================================================
-    # ========== INICIO DE LA SECCIÓN AÑADIDA PARA OLLAMA VISION ======================
-    # =================================================================================
-    ollama_vision:
-      name: |
-        # 🤖 Ollama Vision AI Analysis
-      description: Opciones para analizar la imagen del evento con Ollama.
-      icon: mdi:robot-happy
-      collapsed: true
-      input:
-        ollama_enabled:
-          name: Habilitar análisis con Ollama Vision
-          description: Si se activa, se llamará a la integración 'ollama_vision' para analizar la imagen antes de enviar la notificación.
-          default: false
-          selector:
-            boolean:
-        ollama_prompt:
-          name: Prompt para Ollama Vision
-          description: Escribe el prompt que quieres que Ollama use para analizar la imagen.
-          default: "Describe la imagen en una frase corta."
-          selector:
-            text:
-              multiline: true
-        ollama_image_url:
-          name: Imagen para analizar
-          description: |
-            Elige qué imagen enviar a Ollama. Se recomienda 'Snapshot' para un análisis más preciso, ya que el 'Thumbnail' puede ser demasiado pequeño o recortado.
-            La URL se basa en la variable 'base_url' y el 'id' del evento.
-          default: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg"
-          selector:
-            select:
-              options:
-                - label: Imagen de la notificación (Attachment)
-                  value: "{{attachment}}"
-                - label: Snapshot
-                  value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg"
-                - label: Snapshot con bounding box
-                  value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?bbox=1"
-                - label: Snapshot recortado
-                  value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?crop=1"
-              mode: dropdown
-    # =================================================================================
-    # ========== FIN DE LA SECCIÓN AÑADIDA PARA OLLAMA VISION =========================
-    # =================================================================================
-
     tv_notifications:
       name: |
         # TV Notifications
@@ -1049,11 +1047,6 @@ variables:
   before_zones: "{{ trigger.payload_json['before']['data']['zones'] if trigger.id == 'frigate-event' }}"
   after_zones: "{{ trigger.payload_json['after']['data']['zones'] if trigger.id == 'frigate-event' }}"
   zone_multi_filter: "{{zone_only and zone_multi and after_zones|length and zones and zones |reject('in', after_zones) |list |length == 0 }}"
-  
-  # Variables de Ollama
-  ollama_enabled: !input ollama_enabled
-  ollama_prompt: !input ollama_prompt
-
 conditions:
   condition: or
   conditions:
@@ -1161,19 +1154,9 @@ actions:
 
               zones_satisfied: "{{zone_single_satisfied and zone_multi_satisfied and zone_order_satisfied}}"
               # Customisation of text
-              title_input: !input title
-              message_input: !input message
-              subtitle_input: !input subtitle
-              
-              # Definiciones de adjuntos
-              attachment_input: !input attachment
-              attachment: "{{ attachment_input }}" # Se define aquí para que Ollama pueda usarla
-              ollama_image_url_input: !input ollama_image_url # Se usa en la llamada a Ollama
-              
-              # Definiciones originales
-              title: "{{ title_input }}"
-              message: "{{ message_input }}"
-              subtitle: "{{ subtitle_input }}"
+              title: !input title
+              message: !input message
+              subtitle: !input subtitle
               tap_action: !input tap_action
               button_1: !input button_1
               button_2: !input button_2
@@ -1193,12 +1176,19 @@ actions:
               icon: !input icon
               group: !input group
               channel: !input channel
+              attachment: !input attachment
               video: !input video
               custom_action_auto: !input custom_action_auto
-              
-              # Variable para la respuesta de Ollama
-              ollama_response_text: ""
-
+              # --- INICIO Modificación LLM Vision ---
+              llm_vision_enable: !input llm_vision_enable
+              llm_vision_service: !input llm_vision_service
+              llm_vision_entity: !input llm_vision_entity
+              llm_vision_prompt: !input llm_vision_prompt
+              llm_message_template: !input llm_message_template
+              # Usamos el snapshot con bounding box, que es más útil para la IA
+              llm_snapshot_url: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?bbox=1"
+              llm_description: "" # Marcador de posición para la descripción de la IA
+              # --- FIN Modificación LLM Vision ---
           - alias: "Debug: Initial Output"
             choose:
               - conditions:
@@ -1278,10 +1268,6 @@ actions:
                               Required States: {{input_states}}, 
                               TEST: {{'PASS' if state_satisfied else 'FAIL' }},
                             Custom Filter: {{custom_filter}}
-                          Ollama:
-                            Enabled: {{ollama_enabled}}
-                            Prompt: {{ollama_prompt}}
-                            Image URL: {{ollama_image_url_input if not redacted or not base_url else ollama_image_url_input |replace(base_url, 'REDACTED')}}
           - choose:
               - conditions:
                   - alias: Severity Filter
@@ -1313,59 +1299,63 @@ actions:
                     choose:
                       - conditions: "{{ custom_action_auto |length > 0 }}"
                         sequence: !input "custom_action_auto"
-
-                  # =================================================================================
-                  # ========== INICIO DE LA ACCIÓN OLLAMA VISION ====================================
-                  # =================================================================================
-                  - alias: "Analizar imagen con Ollama Vision (si está habilitado)"
+                  # --- INICIO Modificación LLM Vision ---
+                  - alias: "Ejecutar Análisis LLM Vision (si está habilitado)"
                     choose:
                       - conditions:
-                          - "{{ ollama_enabled }}"
+                          - "{{ llm_vision_enable and llm_vision_entity is defined and llm_vision_entity != '' }}"
                         sequence:
-                          - alias: "Llamar al servicio ollama_vision.scan_image"
-                            service: ollama_vision.scan_image
-                            data:
-                              image_url: "{{ ollama_image_url_input }}"
-                              prompt: "{{ ollama_prompt }}"
-                            response_variable: ollama_response
-                          - alias: "Actualizar variable con respuesta de Ollama"
-                            variables:
-                              ollama_response_text: "{{ ollama_response.description | default('') }}"
-                          - alias: "Debug: Ollama Response"
+                          - alias: "Seleccionar servicio LLM"
                             choose:
+                              # --- Opción 1: Ollama Vision ---
                               - conditions:
-                                  - "{{ debug }}"
+                                  - "{{ llm_vision_service == 'ollama_vision' }}"
                                 sequence:
-                                  - action: logbook.log
-                                    data_template:
-                                      name: Frigate Notification (Ollama)
-                                      message: "DEBUG (Ollama): Análisis completado. Respuesta: {{ ollama_response_text }}"
-                    default:
-                      - alias: "Debug: Ollama Deshabilitado"
-                        choose:
-                          - conditions:
-                              - "{{ debug }}"
-                            sequence:
-                              - action: logbook.log
-                                data_template:
-                                  name: Frigate Notification (Ollama)
-                                  message: "DEBUG (Ollama): Análisis de IA deshabilitado. Saltando paso."
-                  
-                  # Actualizamos las variables de mensaje para incluir la respuesta de Ollama
-                  - variables:
-                      ollama_suffix: >-
-                        {% if ollama_response_text | length > 0 %}
-                          {{ "\n\n🤖 IA: " ~ ollama_response_text }}
+                                  - alias: "Llamar a Ollama Vision"
+                                    service: ollama_vision.ask
+                                    target:
+                                      entity_id: "{{ llm_vision_entity }}"
+                                    data:
+                                      prompt: "{{ llm_vision_prompt }}"
+                                      url: "{{ llm_snapshot_url }}"
+                                    response_variable: llm_service_response
+                                    continue_on_error: true # No detener la notificación si la IA falla
+                              # --- Opción 2: LLMVision ---
+                              - conditions:
+                                  - "{{ llm_vision_service == 'ha-llmvision' }}"
+                                sequence:
+                                  - alias: "Llamar a LLMVision"
+                                    # NOTA: El nombre del servicio y el parámetro 'image_url' son suposiciones.
+                                    # Verifica los nombres correctos en los "Servicios para desarrolladores" de tu HA.
+                                    service: llmvision.query 
+                                    target:
+                                      entity_id: "{{ llm_vision_entity }}"
+                                    data:
+                                      prompt: "{{ llm_vision_prompt }}"
+                                      image_url: "{{ llm_snapshot_url }}"
+                                    response_variable: llm_service_response
+                                    continue_on_error: true # No detener la notificación si la IA falla
+                          
+                          - alias: "Almacenar respuesta del LLM"
+                            variables:
+                              # Intentamos obtener la respuesta (el formato puede variar entre integraciones)
+                              llm_description: >-
+                                {%- if llm_service_response is defined -%}
+                                  {{ llm_service_response.result.text | default(llm_service_response.text | default('La IA no devolvió texto.')) }}
+                                {%- else -%}
+                                  El análisis de IA falló o no se ejecutó.
+                                {%- endif -%}
+
+                  - alias: "Finalizar Mensaje de Notificación (con IA)"
+                    variables:
+                      # Volvemos a renderizar la variable 'message' para incluir la descripción de la IA (si existe)
+                      message: >-
+                        {% if llm_vision_enable and llm_description is defined and llm_description != "" and "falló" not in llm_description %}
+                          {{ llm_message_template }}
                         {% else %}
-                          ""
+                          {{ message }}
                         {% endif %}
-                      message: "{{ message_input ~ ollama_suffix }}"
-                      # El subtítulo original se mantiene, la IA se añade al mensaje principal.
-                      subtitle: "{{ subtitle_input }}" 
-                      title: "{{ title_input }}"
-                  # =================================================================================
-                  # ========== FIN DE LA ACCIÓN OLLAMA VISION =======================================
-                  # =================================================================================
+                  # --- FIN Modificación LLM Vision ---
 
                   - alias: "Send Notification"
                     sequence:
@@ -1375,7 +1365,7 @@ actions:
                               - action: telegram_bot.send_photo
                                 data:
                                   target: "{{telegram_chat_id}}"
-                                  caption: "{{message}}" # 'message' ya incluye la respuesta de Ollama
+                                  caption: "{{message}}"
                                   url: "{{attachment|replace( base_url, telegram_base_url )}}"
                           - conditions: "{{ not notify_group_target }}"
                             sequence:
@@ -1383,7 +1373,7 @@ actions:
                                 domain: mobile_app
                                 type: notify
                                 title: "{{title}}"
-                                message: "{{message}}" # 'message' ya incluye la respuesta de Ollama
+                                message: "{{message}}"
                                 data:
                                   tag: "{{ id }}"
                                   group: "{{ group }}"
@@ -1431,7 +1421,7 @@ actions:
                               - action: "notify.{{ notify_group_target }}"
                                 data:
                                   title: "{{title}}"
-                                  message: "{{message}}" # 'message' ya incluye la respuesta de Ollama
+                                  message: "{{message}}"
                                   data:
                                     tag: "{{ id }}"
                                     group: "{{ group }}"
@@ -1486,7 +1476,7 @@ actions:
                           - action: "notify.{{ notify_group_target }}"
                             data:
                               title: "{{title}}"
-                              message: "{{message}}" # 'message' ya incluye la respuesta de Ollama
+                              message: "{{message}}"
                               data:
                                 tag: "{{ id }}"
                                 group: "{{ group }}"
@@ -1549,7 +1539,7 @@ actions:
                                         tag: "{{ id }}{{'-tts'}}"
                                         channel: "{{'alarm_stream' if critical else channel}}"
                                         alert_once: "{{ alert_once }}"
-                                        tts_text: "{{message}}" # 'message' ya incluye la respuesta de Ollama
+                                        tts_text: "{{message}}"
                               default:
                                 - action: "notify.{{ notify_group_target }}"
                                   data:
@@ -1558,7 +1548,7 @@ actions:
                                       tag: "{{ id }}{{'-tts'}}"
                                       channel: "{{'alarm_stream' if critical else channel}}"
                                       alert_once: "{{ alert_once }}"
-                                      tts_text: "{{message}}" # 'message' ya incluye la respuesta de Ollama
+                                      tts_text: "{{message}}"
                             - action: input_text.set_value
                               data:
                                 value: |
@@ -1582,7 +1572,7 @@ actions:
                 - variables:
                     # use the subsequent attchment variable if set
                     attachment_2: !input attachment_2
-                    attachment: "{{iif(attachment_2, attachment_2, attachment_input)}}" # Usamos el input original
+                    attachment: "{{iif(attachment_2, attachment_2, attachment)}}"
 
                     event: "{{ wait.trigger.payload_json }}"
                     type: "{{event['type']}}"
@@ -1667,12 +1657,10 @@ actions:
                       {% else %}
                         {{objects | list | join(', ') | title}}
                       {% endif %}
-                    
                     # import the title and message again so any sublabel, object or zone changes are captured.
-                    # El análisis de Ollama NO se ejecuta en el loop, así que usamos el 'message_input' original.
-                    title: "{{ title_input }}"
-                    message: "{{ message_input }}"
-                    subtitle: "{{ subtitle_input }}"
+                    title: !input title
+                    message: !input message
+                    subtitle: !input subtitle
 
                     critical_input: !input critical
                     critical: "{{ true if critical_input == 'true' else true if critical_input == True else false }}"
@@ -2031,7 +2019,7 @@ actions:
                                         data:
                                           message: "{{'TTS'}}"
                                           data:
-                                            tag: "{{ id }}{{'-loitTTER' if loitering}}"
+                                            tag: "{{ id }}{{'-loitering-tts' if loitering}}"
                                             channel: "{{'alarm_stream' if critical else channel}}"
                                             alert_once: "{{ alert_once }}"
                                             tts_text: "{{message}}"
