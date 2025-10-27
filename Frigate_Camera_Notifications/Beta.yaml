@@ -431,8 +431,8 @@
                 - label: "LLMVision (by valentinfrlch)"
                   value: "ha-llmvision"
         llm_vision_entity:
-          name: Entidad LLM Vision
-          description: El entity_id de tu integración ollama_vision o llmvision que se usará para el análisis.
+          name: Entidad LLM Vision (Solo para LLMVision)
+          description: El entity_id de tu integración 'llmvision'. Déjalo en blanco si usas 'Ollama Vision', ya que esa integración no usa una entidad.
           default: ""
           selector:
             entity:
@@ -1303,7 +1303,7 @@ actions:
                   - alias: "Ejecutar Análisis LLM Vision (si está habilitado)"
                     choose:
                       - conditions:
-                          - "{{ llm_vision_enable and llm_vision_entity is defined and llm_vision_entity != '' }}"
+                          - "{{ llm_vision_enable }}"
                         sequence:
                           - alias: "Seleccionar servicio LLM"
                             choose:
@@ -1312,36 +1312,33 @@ actions:
                                   - "{{ llm_vision_service == 'ollama_vision' }}"
                                 sequence:
                                   - alias: "Llamar a Ollama Vision"
-                                    service: ollama_vision.analyze_image
-                                    target:
-                                      entity_id: "{{ llm_vision_entity }}"
+                                    service: ollama_vision.ask  # <-- CORRECCIÓN: 'service:' en lugar de 'action:'
+                                    # NOTA: 'ollama_vision.ask' no usa target:
                                     data:
                                       prompt: "{{ llm_vision_prompt }}"
                                       url: "{{ llm_snapshot_url }}"
                                     response_variable: llm_service_response
-                                    continue_on_error: true # No detener la notificación si la IA falla
+                                    continue_on_error: true
                               # --- Opción 2: LLMVision ---
                               - conditions:
                                   - "{{ llm_vision_service == 'ha-llmvision' }}"
                                 sequence:
                                   - alias: "Llamar a LLMVision"
-                                    # NOTA: El nombre del servicio y el parámetro 'image_url' son suposiciones.
-                                    # Verifica los nombres correctos en los "Servicios para desarrolladores" de tu HA.
-                                    service: llmvision.query 
-                                    target:
+                                    service: llmvision.query  # <-- CORRECCIÓN: 'service:' en lugar de 'action:'
+                                    target:                   # <-- CORRECCIÓN: 'target' se mantiene aquí
                                       entity_id: "{{ llm_vision_entity }}"
                                     data:
                                       prompt: "{{ llm_vision_prompt }}"
                                       image_url: "{{ llm_snapshot_url }}"
                                     response_variable: llm_service_response
-                                    continue_on_error: true # No detener la notificación si la IA falla
+                                    continue_on_error: true
                           
                           - alias: "Almacenar respuesta del LLM"
                             variables:
                               # Intentamos obtener la respuesta (el formato puede variar entre integraciones)
                               llm_description: >-
                                 {%- if llm_service_response is defined -%}
-                                  {{ llm_service_response.result.text | default(llm_service_response.text | default('La IA no devolvió texto.')) }}
+                                  {{ llm_service_response.result.text | default(llm_service_response.text | default(llm_service_response.result | default('La IA no devolvió texto.'))) }}
                                 {%- else -%}
                                   El análisis de IA falló o no se ejecutó.
                                 {%- endif -%}
@@ -1350,7 +1347,7 @@ actions:
                     variables:
                       # Volvemos a renderizar la variable 'message' para incluir la descripción de la IA (si existe)
                       message: >-
-                        {% if llm_vision_enable and llm_description is defined and llm_description != "" and "falló" not in llm_description %}
+                        {% if llm_vision_enable and llm_description is defined and llm_description != "" and "falló" not in llm_description and "no devolvió" not in llm_description %}
                           {{ llm_message_template }}
                         {% else %}
                           {{ message }}
