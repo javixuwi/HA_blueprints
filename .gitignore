@@ -1,0 +1,10 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/HA_blueprints/copilot-chat/ec9c0710/sessions
+/.vs/HA_blueprints/copilot-chat/ec9c0710/sessions/05283dd5-8120-4a40-a2bd-3b8045fddaf3
+/.vs/HA_blueprints/FileContentIndex
+/.vs/HA_blueprints/FileContentIndex/0240a2d9-9491-445a-9e3c-12109a8d15b5.vsidx
+/.vs/HA_blueprints/v17/.wsuo
+/.vs/slnx.sqlite
