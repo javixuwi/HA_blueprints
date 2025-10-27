@@ -1312,7 +1312,7 @@ actions:
                                   - "{{ llm_vision_service == 'ollama_vision' }}"
                                 sequence:
                                   - alias: "Llamar a Ollama Vision"
-                                    service: ollama_vision.ask
+                                    service: ollama_vision.analyze_image
                                     target:
                                       entity_id: "{{ llm_vision_entity }}"
                                     data:
