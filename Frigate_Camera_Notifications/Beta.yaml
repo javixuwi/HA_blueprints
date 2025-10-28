@@ -1318,6 +1318,9 @@ actions:
                               message: "{{ input_prompt }}"
                             response_variable: response
                             enabled: true
+                          - wait_template: "{{ response is defined }}"
+                            timeout: "00:00:30"
+                            continue_on_timeout: true
                           - choose:
                               - conditions: "{{ response is defined and (response.response_text | default('') | length) > 0 }}"
                                 sequence:
