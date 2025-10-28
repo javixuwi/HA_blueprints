@@ -1313,7 +1313,7 @@ actions:
                               model: "{{ input_model }}"
                               provider: "{{ input_provider }}"
                               generate_title: "{{ input_generate_title }}"
-                              image_file: "{{ attachment }}"
+                              image_file: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg"
                               event_id: "{{ id }}"
                               message: "{{ input_prompt }}"
                             response_variable: response
