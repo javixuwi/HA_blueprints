@@ -1049,11 +1049,11 @@ variables:
   after_zones: "{{ trigger.payload_json['after']['data']['zones'] if trigger.id == 'frigate-event' }}"
   zone_multi_filter: "{{zone_only and zone_multi and after_zones|length and zones and zones |reject('in', after_zones) |list |length == 0 }}"
   # LLMVision Variables
-  llmvision_integration: !input llmvision_integration
-  generate_title: !input generate_title
-  prompt: !input prompt
-  model: !input model
-  provider: !input provider
+  input_llmvision_integration: !input llmvision_integration
+  input_generate_title: !input generate_title
+  input_prompt: !input prompt
+  input_model: !input model
+  input_provider: !input provider
 # conditions
 conditions:
   condition: or
@@ -1308,12 +1308,12 @@ actions:
                             data:
                               remember: true
                               use_memory: true
-                              model: "{{ model }}"
-                              provider: "{{ provider }}"
-                              generate_title: "{{ generate_title }}"
+                              model: "{{ input_model }}"
+                              provider: "{{ input_provider }}"
+                              generate_title: "{{ input_generate_title }}"
                               image_file: "{{ attachment }}"
                               event_id: "{{ id }}"
-                              message: "{{ prompt }}"
+                              message: "{{ input_prompt }}"
                             response_variable: response
                             enabled: true
                           - choose:
