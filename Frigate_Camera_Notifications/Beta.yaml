@@ -1320,15 +1320,7 @@ actions:
                               - conditions: "{{ response is defined and (response.response_text | default('') | length) > 0 }}"
                                 sequence:
                                   - variables:
-                                      message: "{{ response.response_text }}"
-                            default:
-                              - action: logbook.log
-                                data_template:
-                                  name: Frigate Notification - LLMVision
-                                  message: >-
-                                    LLMVision failed or returned empty response for review_id={{ review_id }}, camera={{ camera }}.\
-                                    Response: {{ response | default('None') }}
-                    default: []
+                                      message: "{{ response.response_text }}"                    
                   - alias: "Send Notification"
                     sequence:
                       - choose:
