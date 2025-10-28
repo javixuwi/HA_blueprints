@@ -84,16 +84,21 @@
       description: Used to support multiple instances of Frigate. Leave blank if you don't know what to do.
       default: ""
     llmvision_integration:
-      name: LLMVision Integration (Optional)
+      name: |
+        # LLMVision Integration (Optional)
+      description: If you have the LLMVision integration installed, you can select it here to enable image recognition name updates in notifications.
       icon: mdi:brain
       collapsed: true
-      description: |
-        If you have the LLMVision integration installed, you can select it here to enable face recognition name updates in notifications.
-      default: false
       input:
+        llmvision_enabled:
+          name: Enable LLMVision
+          description: Enable LLMVision image recognition for notifications.
+          default: false
+          selector:
+            boolean: {}
         generate_title:
           name: Generate Notification Title
-          description: Use LLMVision to generate a notification title based on the detected faces.
+          description: Use LLMVision to generate a notification title based on the detected images.
           default: true
           selector:
             boolean: {}
@@ -1046,7 +1051,7 @@ variables:
   after_zones: "{{ trigger.payload_json['after']['data']['zones'] if trigger.id == 'frigate-event' }}"
   zone_multi_filter: "{{zone_only and zone_multi and after_zones|length and zones and zones |reject('in', after_zones) |list |length == 0 }}"
   # LLMVision Variables
-  input_llmvision_integration: !input llmvision_integration
+  input_llmvision_enabled: !input llmvision_enabled
   input_generate_title: !input generate_title
   input_prompt: !input prompt
   input_model: !input model
@@ -1299,7 +1304,7 @@ actions:
                     choose:
                       - conditions:
                           - condition: template
-                            value_template: "{{ llmvision_integration == 'on' or llmvision_integration == true or llmvision_integration == 'true' }}"
+                            value_template: "{{ input_llmvision_enabled == 'on' or input_llmvision_enabled == true or input_llmvision_enabled == 'true' }}"
                         sequence:
                           - service: llmvision.image_analyzer
                             data:
