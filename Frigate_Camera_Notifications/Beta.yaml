@@ -1056,6 +1056,7 @@ variables:
   input_prompt: !input prompt
   input_model: !input model
   input_provider: !input provider
+  image_entity_name: "{{'image.' + camera_name + '_person' }}"
 # conditions
 conditions:
   condition: or
@@ -1313,7 +1314,7 @@ actions:
                               model: "{{ input_model }}"
                               provider: "{{ input_provider }}"
                               generate_title: "{{ input_generate_title }}"
-                              image_entity: "image.{{ camera_name }}_person"
+                              image_entity: "{{ image_entity_name }}""
                               event_id: "{{ id }}"
                               message: "{{ input_prompt }}"
                             response_variable: response
