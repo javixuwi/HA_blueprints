@@ -1,9 +1,12 @@
 ﻿blueprint:
-  name: Frigate Notifications (0.14.0.2w)
-  author: SgtBatten
+  name: Frigate Notifications - LLMVision Support
+  author: fjaviys
   homeassistant:
     min_version: 2024.11.0
   description: |
+    Based on the original blueprint by SgtBatten (https://github.com/SgtBatten/HA_blueprints/blob/main/Frigate_Camera_Notifications). 
+    Thank you for the inspiration and foundation for this blueprint.
+
     ## Frigate Notifications
 
     A highly customisable Notification template for Frigate Camera Notifications.
@@ -15,6 +18,7 @@
         - **Note:** "Enable the unauthenticated notification event proxy" must be ticked during setup
       - An MQTT broker connected to Home Assistant and Frigate.
       - Minimum iOS Version: 15.0
+      - LLMVision Integration (Optional): Latest version
 
     ### Required Configuration Options:
       - Frigate Cameras
@@ -23,13 +27,14 @@
     ### Features:
       - Easily select the camera entities or mobile device using a drop-down menu.
       - Configure multiple cameras in one automation. 
+      - Customisable notification title and message with variables with LLMVision.
 
       For the full features list visit the [GitHub Repository][1]
 
-    [1]: https://github.com/SgtBatten/HA_blueprints/blob/main/Frigate_Camera_Notifications
+    [1]: https://github.com/javixuwi/HA_blueprints/blob/main/Frigate_Camera_Notifications
 
     ## Support
-    Go to https://github.com/SgtBatten/HA_blueprints to report bugs, request new features, or get support with your configuration.
+    Go to https://github.com/javixuwi/HA_blueprints to report bugs, request new features, or get support with your configuration.
 
   domain: automation
   source_url: https://github.com/javixuwi/HA_blueprints/blob/main/Frigate_Camera_Notifications/Beta.yaml
