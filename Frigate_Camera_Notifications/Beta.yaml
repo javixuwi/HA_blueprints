@@ -1,5 +1,5 @@
 ﻿blueprint:
-  name: Frigate Notifications (0.14.0.2w) - LLM Integration
+  name: Frigate Notifications (0.14.0.2w)
   author: SgtBatten
   homeassistant:
     min_version: 2024.11.0
@@ -32,7 +32,7 @@
     Go to https://github.com/SgtBatten/HA_blueprints to report bugs, request new features, or get support with your configuration.
 
   domain: automation
-  source_url: https://github.com/SgtBatten/HA_blueprints/blob/main/Frigate_Camera_Notifications/Beta.yaml
+  source_url: https://github.com/javixuwi/HA_blueprints/blob/main/Frigate_Camera_Notifications/Beta.yaml
   input:
     camera:
       name: Frigate Cameras
@@ -46,6 +46,7 @@
             integration: frigate
             domain: camera
           multiple: true
+
     notify_device:
       name: Mobile Device
       description: Select a device that runs the official Home Assistant app to receive notifications. If you wish to notify a group of devices and/or Android/Fire TV use the field below to override this selection. This will be ignored in that case but is still required.
@@ -54,6 +55,7 @@
         device:
           filter:
             integration: mobile_app
+
     notify_group:
       name: Notification Group or Android/Fire TV (Optional)
       description: |
@@ -62,6 +64,43 @@
 
         Note: If the group contains both mobile devices and TVs, the TV will not display the snapshot unless "TV notifications" is set to true. However, this will stop Android phones from receiving thumbnails.
       default: ""
+
+    llmvision_integration:
+      name: LLMVision Integration (Optional)
+      icon: mdi:brain
+      collapsed: true
+      description: |
+        If you have the LLMVision integration installed, you can select it here to enable face recognition name updates in notifications.
+      default: false
+      input:
+        generate_title:
+          name: Generate Notification Title
+          description: Use LLMVision to generate a notification title based on the detected faces.
+          default: true
+          selector:
+            boolean: {}
+        provider:
+            name: Provider
+            description: Choose the LLMVision provider. See documentation for supported options.
+            selector:
+              config_entry:
+                integration: llmvision
+        model:
+            name: Model
+            description: Language model to use. Depends on the selected provider.
+            default: gemini-2.0-flash
+            selector:
+              text:
+                multiline: false
+                multiple: false
+        prompt:
+            name: LLMVision Prompt
+            description: Customize the prompt used to generate event summaries.
+            default: Summarize the observed events using clear, neutral third-person language. Use timestamps to ensure the summary follows the correct chronological order. Focus on moving subjects such as people, vehicles, animals, packages, equipment, or other active elements. Ignore static background objects unless directly interacted with. Include stationary vehicles only if they are clearly identifiable as delivery or emergency vehicles, mentioning any visible company names or uniform details. Describe activity relevant to the general monitored area without referencing camera angles, timestamps, or observers. Present the events as if witnessed in real time, avoiding frame-by-frame descriptions or introductory phrases. Summarize naturally in a single, cohesive narrative, keeping it concise and suitable for brief notifications. When context strongly suggests a likely outcome, describe it confidently. Do not mention the absence of activity or objects, nor conclude with statements about what was or wasn’t observed.
+            selector:
+              text:
+                multiline: true
+                multiple: false
     base_url:
       name: Base URL (Optional)
       description: |
@@ -405,52 +444,6 @@
           name: Notification Channel - Android only (Optional)
           description: Create a new channel for notifications to allow custom notification sounds, vibration patterns, and override of Do Not Disturb mode. Configured directly on the device.
           default: ""
-    
-    llm_vision:
-      name: |
-        # LLM Vision Analysis
-      description: (Opcional) Analiza el snapshot del evento con un LLM local (Ollama o LLMVision).
-      icon: mdi:robot-love
-      collapsed: true
-      input:
-        llm_vision_enable:
-          name: Habilitar Análisis LLM Vision
-          description: Si se activa, el snapshot del evento se enviará a un LLM para su análisis.
-          default: false
-          selector:
-            boolean:
-        llm_vision_service:
-          name: Integración LLM Vision
-          description: Selecciona qué integración utilizar para el análisis.
-          default: "ollama_vision"
-          selector:
-            select:
-              options:
-                - label: "Ollama Vision (by remimikalsen)"
-                  value: "ollama_vision"
-                - label: "LLMVision (by valentinfrlch)"
-                  value: "ha-llmvision"
-        llm_vision_entity:
-          name: Entidad LLM Vision (Solo para LLMVision)
-          description: El entity_id de tu integración 'llmvision'. Déjalo en blanco si usas 'Ollama Vision', ya que esa integración no usa una entidad.
-          default: ""
-          selector:
-            entity:
-        llm_vision_prompt:
-          name: Prompt para el Análisis LLM
-          description: El prompt que se enviará al LLM. Puedes usar variables como {{camera_name}} y {{label}}.
-          default: "Esto es un snapshot de la cámara {{camera_name}}. Se ha detectado un {{label}}. Describe la escena brevemente. Sé conciso."
-          selector:
-            text:
-              multiline: true
-        llm_message_template:
-          name: Plantilla del Mensaje Final
-          description: Cómo se añade el análisis de IA a la notificación. Usa {{message}} para el mensaje original y {{llm_description}} para la respuesta de la IA.
-          default: "{{ message }}\n\n🤖: {{ llm_description }}"
-          selector:
-            text:
-              multiline: true
-
     filters:
       name: |
         # Filters
@@ -961,9 +954,11 @@
           selector:
             boolean:
 mode: parallel
+# trigger_variables
 trigger_variables:
   # severity: !input review_severity
   mqtt_topic: !input mqtt_topic
+# triggers
 triggers:
   - trigger: mqtt
     topic: "{{mqtt_topic}}"
@@ -980,6 +975,7 @@ triggers:
     event_data:
       action: "custom-{{ this.entity_id}}"
     id: custom
+# variables
 variables:
   input_camera: !input camera
   input_camera_name: "{{input_camera|expand|map(attribute='attributes.camera_name', default='none')|list}}"
@@ -1047,6 +1043,13 @@ variables:
   before_zones: "{{ trigger.payload_json['before']['data']['zones'] if trigger.id == 'frigate-event' }}"
   after_zones: "{{ trigger.payload_json['after']['data']['zones'] if trigger.id == 'frigate-event' }}"
   zone_multi_filter: "{{zone_only and zone_multi and after_zones|length and zones and zones |reject('in', after_zones) |list |length == 0 }}"
+  # LLMVision Variables
+  llmvision_integration: !input llmvision_integration
+  generate_title: !input generate_title
+  prompt: !input prompt
+  model: !input model
+  provider: !input provider
+# conditions
 conditions:
   condition: or
   conditions:
@@ -1069,6 +1072,7 @@ conditions:
         - alias: Disable Times
           condition: template
           value_template: "{{ not disable_times|length or not now().hour in disable_times|map('int')|list }}"
+# actions
 actions:
   - choose:
       - alias: "Silence New Object Notifications"
@@ -1179,16 +1183,6 @@ actions:
               attachment: !input attachment
               video: !input video
               custom_action_auto: !input custom_action_auto
-              # --- INICIO Modificación LLM Vision ---
-              llm_vision_enable: !input llm_vision_enable
-              llm_vision_service: !input llm_vision_service
-              llm_vision_entity: !input llm_vision_entity
-              llm_vision_prompt: !input llm_vision_prompt
-              llm_message_template: !input llm_message_template
-              # Usamos el snapshot con bounding box, que es más útil para la IA
-              llm_snapshot_url: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?bbox=1"
-              llm_description: "" # Marcador de posición para la descripción de la IA
-              # --- FIN Modificación LLM Vision ---
           - alias: "Debug: Initial Output"
             choose:
               - conditions:
@@ -1299,61 +1293,37 @@ actions:
                     choose:
                       - conditions: "{{ custom_action_auto |length > 0 }}"
                         sequence: !input "custom_action_auto"
-                  # --- INICIO Modificación LLM Vision ---
-                  - alias: "Ejecutar Análisis LLM Vision (si está habilitado)"
+                  - alias: "LLMVision Pre-Notification"
                     choose:
                       - conditions:
-                          - "{{ llm_vision_enable }}"
+                          - condition: template
+                            value_template: "{{ llmvision_integration == 'on' or llmvision_integration == true or llmvision_integration == 'true' }}"
                         sequence:
-                          - alias: "Seleccionar servicio LLM"
-                            choose:
-                              # --- Opción 1: Ollama Vision ---
-                              - conditions:
-                                  - "{{ llm_vision_service == 'ollama_vision' }}"
+                          - service: llmvision.image_analyzer
+                            data:
+                              remember: true
+                              use_memory: true
+                              model: "{{ model }}"
+                              provider: "{{ provider }}"
+                              generate_title: "{{ generate_title }}"
+                              image_file: "{{ attachment }}"
+                              event_id: "{{ id }}"
+                              message: "{{ prompt }}"
+                            response_variable: response
+                            enabled: true
+                          - choose:
+                              - conditions: "{{ response is defined and (response.response_text | default('') | length) > 0 }}"
                                 sequence:
-                                  - alias: "Llamar a Ollama Vision"
-                                    service: ollama_vision.ask  # <-- CORRECCIÓN: 'service:' en lugar de 'action:'
-                                    # NOTA: 'ollama_vision.ask' no usa target:
-                                    data:
-                                      prompt: "{{ llm_vision_prompt }}"
-                                      url: "{{ llm_snapshot_url }}"
-                                    response_variable: llm_service_response
-                                    continue_on_error: true
-                              # --- Opción 2: LLMVision ---
-                              - conditions:
-                                  - "{{ llm_vision_service == 'ha-llmvision' }}"
-                                sequence:
-                                  - alias: "Llamar a LLMVision"
-                                    service: llmvision.query  # <-- CORRECCIÓN: 'service:' en lugar de 'action:'
-                                    target:                   # <-- CORRECCIÓN: 'target' se mantiene aquí
-                                      entity_id: "{{ llm_vision_entity }}"
-                                    data:
-                                      prompt: "{{ llm_vision_prompt }}"
-                                      image_url: "{{ llm_snapshot_url }}"
-                                    response_variable: llm_service_response
-                                    continue_on_error: true
-                          
-                          - alias: "Almacenar respuesta del LLM"
-                            variables:
-                              # Intentamos obtener la respuesta (el formato puede variar entre integraciones)
-                              llm_description: >-
-                                {%- if llm_service_response is defined -%}
-                                  {{ llm_service_response.result.text | default(llm_service_response.text | default(llm_service_response.result | default('La IA no devolvió texto.'))) }}
-                                {%- else -%}
-                                  El análisis de IA falló o no se ejecutó.
-                                {%- endif -%}
-
-                  - alias: "Finalizar Mensaje de Notificación (con IA)"
-                    variables:
-                      # Volvemos a renderizar la variable 'message' para incluir la descripción de la IA (si existe)
-                      message: >-
-                        {% if llm_vision_enable and llm_description is defined and llm_description != "" and "falló" not in llm_description and "no devolvió" not in llm_description %}
-                          {{ llm_message_template }}
-                        {% else %}
-                          {{ message }}
-                        {% endif %}
-                  # --- FIN Modificación LLM Vision ---
-
+                                  - variables:
+                                      message: "{{ response.response_text }}"
+                              default:
+                                - action: logbook.log
+                                  data_template:
+                                    name: Frigate Notification - LLMVision
+                                    message: >-
+                                      LLMVision failed or returned empty response for review_id={{ review_id }}, camera={{ camera }}.\
+                                      Response: {{ response | default('None') }}
+                      default: []
                   - alias: "Send Notification"
                     sequence:
                       - choose:

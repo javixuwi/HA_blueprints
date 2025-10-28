@@ -1,7 +1,8 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\Frigate_Camera_Notifications"
   ],
-  "SelectedNode": "\\C:\\Users\\Javi\\Source\\Repos\\HA_blueprints",
+  "SelectedNode": "\\Frigate_Camera_Notifications\\Stable.yaml",
   "PreviewInSolutionExplorer": false
 }
