@@ -51,7 +51,6 @@
             integration: frigate
             domain: camera
           multiple: true
-
     notify_device:
       name: Mobile Device
       description: Select a device that runs the official Home Assistant app to receive notifications. If you wish to notify a group of devices and/or Android/Fire TV use the field below to override this selection. This will be ignored in that case but is still required.
@@ -60,7 +59,6 @@
         device:
           filter:
             integration: mobile_app
-
     notify_group:
       name: Notification Group or Android/Fire TV (Optional)
       description: |
@@ -69,7 +67,22 @@
 
         Note: If the group contains both mobile devices and TVs, the TV will not display the snapshot unless "TV notifications" is set to true. However, this will stop Android phones from receiving thumbnails.
       default: ""
-
+    base_url:
+      name: Base URL (Optional)
+      description: |
+        The external URL for your Home Assistant instance.
+        Recommended for iOS and required for Android/Fire TV.
+        Must include the scheme i.e http:// or https://
+        Examples: http://192.168.1.25:8123   https://homeassistant.mydomain.com
+      default: ""
+    mqtt_topic:
+      name: MQTT Topic (Advanced)
+      description: The MQTT topic Frigate sends review messages in.
+      default: frigate/reviews
+    client_id:
+      name: Client ID (Optional-Advanced)
+      description: Used to support multiple instances of Frigate. Leave blank if you don't know what to do.
+      default: ""
     llmvision_integration:
       name: LLMVision Integration (Optional)
       icon: mdi:brain
@@ -106,22 +119,6 @@
               text:
                 multiline: true
                 multiple: false
-    base_url:
-      name: Base URL (Optional)
-      description: |
-        The external URL for your Home Assistant instance.
-        Recommended for iOS and required for Android/Fire TV.
-        Must include the scheme i.e http:// or https://
-        Examples: http://192.168.1.25:8123   https://homeassistant.mydomain.com
-      default: ""
-    mqtt_topic:
-      name: MQTT Topic (Advanced)
-      description: The MQTT topic Frigate sends review messages in.
-      default: frigate/reviews
-    client_id:
-      name: Client ID (Optional-Advanced)
-      description: Used to support multiple instances of Frigate. Leave blank if you don't know what to do.
-      default: ""
     telegram:
       name: |
         # Telegram Configuration
